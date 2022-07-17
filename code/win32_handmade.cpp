@@ -1,5 +1,35 @@
 #include <windows.h>
 
+#define internal static
+#define local_persist static
+#define global_variable static
+
+global_variable HBITMAP BitmapHandle;
+global_variable BITMAPINFO BitmapInfo;
+global_variable void *BitmapMemory;
+global_variable HDC BitmapDeviceContext;
+
+global_variable bool Running;
+
+internal void Win32ResizeDIBSection(int Width, int Height)
+{
+    BitmapInfo.bmiHeader.biSize = sizeof(BitmapInfo.bmiHeader);
+    BitmapInfo.bmiHeader.biWidth = Width;
+    BitmapInfo.bmiHeader.biHeight = Height;
+    BitmapInfo.bmiHeader.biPlanes = 1;
+    BitmapInfo.bmiHeader.biBitCount = 32;
+    BitmapInfo.bmiHeader.biCompression = BI_RGB;
+
+    BitmapHandle = CreateDIBSection(BitmapDeviceContext, &BitmapInfo,
+                                    DIB_RGB_COLORS, &BitmapMemory, 0, 0);
+}
+
+internal void Win32UpdateWindow(HDC DeviceContext, int X, int Y, int Width, int Height)
+{
+    StretchDIBits(DeviceContext, X, Y, Width, Height, X, Y, Width, Height,
+                  BitmapMemory, &BitmapInfo, DIB_RGB_COLORS, SRCCOPY);
+}
+
 // This function is responsible for handling Window (basically, record every activity that we did with the Window)
 LRESULT CALLBACK MainWindowCallback(
     HWND Window,
@@ -13,19 +43,25 @@ LRESULT CALLBACK MainWindowCallback(
     {
     case WM_SIZE:
     {
-        OutputDebugStringA("WM_SIZE\n");
+        RECT ClientRect;
+        GetClientRect(Window, &ClientRect);
+        int Width = ClientRect.right - ClientRect.left;
+        int Height = ClientRect.bottom - ClientRect.top;
+        Win32ResizeDIBSection(Width, Height);
         break;
     }
 
     case WM_DESTROY:
     {
-        OutputDebugStringA("WM_DESTROY\n");
+        // TODO: Handle this with an error - recreate window
+        Running = false;
         break;
     }
 
     case WM_CLOSE:
     {
-        OutputDebugStringA("WM_CLOSE\n");
+        // TODO: Handle this with a message to the user?
+        Running = false;
         break;
     }
 
@@ -43,13 +79,7 @@ LRESULT CALLBACK MainWindowCallback(
         int Y = Paint.rcPaint.top;
         int Width = Paint.rcPaint.right - Paint.rcPaint.left;
         int Height = Paint.rcPaint.bottom - Paint.rcPaint.top;
-        static DWORD Operation = WHITENESS;
-        PatBlt(DeviceContent, X, Y, Width, Height, Operation);
-        if(Operation == WHITENESS){
-            Operation = BLACKNESS;
-        } else{
-            Operation = WHITENESS;
-        }
+        Win32UpdateWindow(DeviceContent, X, Y, Width, Height);
         EndPaint(Window, &Paint);
         break;
     }
@@ -96,8 +126,9 @@ int CALLBACK WinMain(
 
         if (WindowHandle)
         {
+            Running = true;
             // Todo: Logging
-            for (;;)
+            while (Running)
             {
                 MSG Message;
                 BOOL MessageResult = GetMessageA(&Message, 0, 0, 0);
