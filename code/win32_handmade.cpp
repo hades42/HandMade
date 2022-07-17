@@ -13,6 +13,14 @@ global_variable bool Running;
 
 internal void Win32ResizeDIBSection(int Width, int Height)
 {
+    if(BitmapHandle){
+        DeleteObject(BitmapHandle);
+    } 
+
+    if(!BitmapDeviceContext){
+        BitmapDeviceContext = CreateCompatibleDC(0);
+    }
+
     BitmapInfo.bmiHeader.biSize = sizeof(BitmapInfo.bmiHeader);
     BitmapInfo.bmiHeader.biWidth = Width;
     BitmapInfo.bmiHeader.biHeight = Height;
