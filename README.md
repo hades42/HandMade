@@ -4,7 +4,7 @@ I'm currently learning how to make a game from scratch to solidify my knowledge 
 
 ## Requirement
 
-* You should install Visual Studio (making to check for C/C++ tool kit in the process of installing VS because we are going to take the x64 compiler from there to compile the bulid for the game)  
+* You should install Visual Studio (making sure to check for C/C++ tool kit in the process of installing VS because we are going to take the x64 compiler from there to compile the bulid for the game)  
 
 * To get the path of the compiler for VS2022(which is the current version I'm using):
 
